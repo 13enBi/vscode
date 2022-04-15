@@ -450,8 +450,7 @@ import { ltrim } from 'vs/base/common/strings';
 		return basicCrudTest(join(testDir, 'deep', 'newFile.txt'));
 	});
 
-	test.skip('includes are supported (relative pattern)', async function () {
-		// TODO@bpasero exclude and includes need to be checked against in the normalized form!
+	test('includes are supported (relative pattern)', async function () {
 		await watcher.watch([{ path: testDir, excludes: [], includes: [{ base: testDir, pattern: 'deep/newFile.txt' }], recursive: true }]);
 
 		return basicCrudTest(join(testDir, 'deep', 'newFile.txt'));

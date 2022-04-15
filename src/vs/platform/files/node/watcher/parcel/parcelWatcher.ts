@@ -392,14 +392,16 @@ export class ParcelWatcher extends Disposable implements IRecursiveWatcher {
 			return;
 		}
 
-		// Check for excludes
-		const rawEvents = this.handleExcludeIncludes(parcelEvents, excludes, includes);
-
 		// Normalize events: handle NFC normalization and symlinks
-		const { events: normalizedEvents, rootDeleted } = this.normalizeEvents(rawEvents, watcher.request, realPathDiffers, realPathLength);
+		// It is important to do this before checking for includes
+		// and excludes to check on the original path.
+		const { events: normalizedEvents, rootDeleted } = this.normalizeEvents(parcelEvents, watcher.request, realPathDiffers, realPathLength);
+
+		// Check for excludes
+		const includedEvents = this.handleExcludeIncludes(normalizedEvents, excludes, includes);
 
 		// Coalesce events: merge events of same kind
-		const coalescedEvents = coalesceEvents(normalizedEvents);
+		const coalescedEvents = coalesceEvents(includedEvents);
 
 		// Filter events: check for specific events we want to exclude
 		const filteredEvents = this.filterEvents(coalescedEvents, watcher.request, rootDeleted);
@@ -494,7 +496,7 @@ export class ParcelWatcher extends Disposable implements IRecursiveWatcher {
 		return { realPath, realPathDiffers, realPathLength };
 	}
 
-	private normalizeEvents(events: IDiskFileChange[], request: IRecursiveWatchRequest, realPathDiffers: boolean, realPathLength: number): { events: IDiskFileChange[]; rootDeleted: boolean } {
+	private normalizeEvents(events: parcelWatcher.Event[], request: IRecursiveWatchRequest, realPathDiffers: boolean, realPathLength: number): { events: parcelWatcher.Event[]; rootDeleted: boolean } {
 		let rootDeleted = false;
 
 		for (const event of events) {
@@ -518,7 +520,7 @@ export class ParcelWatcher extends Disposable implements IRecursiveWatcher {
 			}
 
 			// Check for root deleted
-			if (event.path === request.path && event.type === FileChangeType.DELETED) {
+			if (event.path === request.path && event.type === 'delete') {
 				rootDeleted = true;
 			}
 		}
